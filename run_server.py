@@ -30,6 +30,7 @@ class MarkovReqHandler(BaseHTTPServer.BaseHTTPRequestHandler):
             message = form['text'].value
         self.wfile.write('<html><body><form action="/" method="POST"><input type="text" name="text"><input type="submit" value="send"></form><br>%s</body></html>' % message)
 
+print os.environ.get('PORT', 5000)
 def run(server_class=BaseHTTPServer.HTTPServer,
         handler_class=MarkovReqHandler,
         port=os.environ.get('PORT', 5000)):
