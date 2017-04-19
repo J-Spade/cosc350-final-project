@@ -32,7 +32,8 @@ class MarkovReqHandler(BaseHTTPServer.BaseHTTPRequestHandler):
 
 def run(server_class=BaseHTTPServer.HTTPServer,
         handler_class=MarkovReqHandler,
-        port=os.environ.get("PORT", 5000)):
+        port=os.environ.get('PORT', 5000)
+        host='0.0.0.0'):
     server_address = ('', port)
     httpd = server_class(server_address, handler_class)
     print 'starting httpd...'
