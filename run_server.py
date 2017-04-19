@@ -29,7 +29,7 @@ class MarkovReqHandler(BaseHTTPServer.BaseHTTPRequestHandler):
             message = form['text'].value
         self.wfile.write('<html><body><form action="/" method="POST"><input type="text" name="text"><input type="submit" value="send"></form><br>%s</body></html>' % message)
 
-def run(server_class=BaseHTTPServer.HTTPServer, handler_class=MarkovReqHandler, port=8000):
+def run(server_class=BaseHTTPServer.HTTPServer, handler_class=MarkovReqHandler, port=80):
     server_address = ('', port)
     httpd = server_class(server_address, handler_class)
     print 'starting httpd...'
