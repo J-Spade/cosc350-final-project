@@ -7,7 +7,7 @@ import string
 import copy
 import threading
 import pickle
-import boto
+import boto3
 
 class MarkovReqHandler(BaseHTTPServer.BaseHTTPRequestHandler):
     
