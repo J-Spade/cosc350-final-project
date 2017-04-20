@@ -298,5 +298,6 @@ try:
 
 except IOError:
     print 'Dictionary could not be loaded.'
+    dictLock.release()
 
 runserver()
