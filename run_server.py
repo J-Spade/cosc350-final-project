@@ -54,8 +54,8 @@ class MarkovReqHandler(BaseHTTPServer.BaseHTTPRequestHandler):
             MarkovReqHandler.interpret_message(message)
             print 'Generating response...'
             response = MarkovReqHandler.generate_chain(message)
-            self.wfile.write(webpage_text.replace('<!-- Response text goes here -->', response))
             MarkovReqHandler.save_dictionary()
+            self.wfile.write(webpage_text.replace('<!-- Response text goes here -->', response))
         except UnicodeDecodeError:
             print 'Unicode Error!'
             self.wfile.write(webpage_text.replace(
