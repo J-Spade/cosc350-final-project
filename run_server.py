@@ -122,7 +122,7 @@ class MarkovReqHandler(BaseHTTPServer.BaseHTTPRequestHandler):
             try:
                 next = words[index + 2]
                 nextpair = words[index + 1] + u' ' + words[index + 2]
-           except IndexError:
+            except IndexError:
                 # this means we got to the end of the sentence
                 break
 
