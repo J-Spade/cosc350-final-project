@@ -10,7 +10,7 @@ import pickle
 import sys  
 
 reload(sys)  
-sys.setdefaultencoding('utf8')
+sys.setdefaultencoding('utf-16')
 
 class MarkovReqHandler(BaseHTTPServer.BaseHTTPRequestHandler):
     
