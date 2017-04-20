@@ -291,7 +291,7 @@ server_class = BaseHTTPServer.HTTPServer
 handler_class = MarkovReqHandler
 port = int(os.environ.get('PORT', 5000)
 
-server_address = '0.0.0.0', port
+server_address = ('0.0.0.0', port)
 httpd = server_class(server_address, handler_class)
 print 'Starting httpd...'
 httpd.serve_forever()
