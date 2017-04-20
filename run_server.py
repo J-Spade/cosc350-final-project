@@ -8,6 +8,7 @@ import copy
 import threading
 import pickle
 import boto
+from boto.s3.key import Key
 
 class MarkovReqHandler(BaseHTTPServer.BaseHTTPRequestHandler):
     
