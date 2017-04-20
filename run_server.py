@@ -49,9 +49,9 @@ class MarkovReqHandler(BaseHTTPServer.BaseHTTPRequestHandler):
         if (len(form) > 0):
             message = form['text'].value.lower()
         print 'Interpreting message...'
-        interpret_message(message)
+        MarkovReqHandler.interpret_message(message)
         print 'Generating response...'
-        response = generate_chain(message)
+        response = MarkovReqHandler.generate_chain(message)
         self.wfile.write(webpage_text.replace('<!-- Response text goes here -->', response))
         save_dictionary()
 
