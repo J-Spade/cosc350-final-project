@@ -300,6 +300,7 @@ print 'Creating S3 connection...'
 conn = boto.connect_s3()
 bucket = conn.get_bucket(os.environ.get('S3_BUCKET_NAME'))
 MarkovReqHandler.s3_bucket_key = Key(bucket)
+MarkovReqHandler.s3_bucket_key.key = 'Markov_Dict'
 
 print 'Loading dictionary...'
 try:
@@ -307,7 +308,10 @@ try:
     MarkovReqHandler.count_dictionary()
 
 except IOError:
-    print 'Dictionary could not be loaded.'
+    print 'Dictionary could not be loaded from file.'
+    MarkovReqHandler.dictLock.release()
+except boto.exception.S3ResponseError
+    print 'Dictionary could not be loaded from S3.'
     MarkovReqHandler.dictLock.release()
 
 
