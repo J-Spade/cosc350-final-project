@@ -84,6 +84,7 @@ def load_dictionary():
 def interpret_message(message):
     """Interprets a message"""
     
+    print 'Acquiring Lock'
     dictLock.acquire()
     words = message.split()
     words.append(STOPWORD)
@@ -91,10 +92,7 @@ def interpret_message(message):
 
     sentences_ever = sentences_ever + 1
 
-    # find URLs, neaten them up
-    for i in range(0, len(words)):
-        words[i] = clean_url(words[i])
-
+    print 'Doing keys'
     for word in words:
         if not (wordcounts.has_key(word)):
             wordcounts[word] = 0
@@ -105,6 +103,7 @@ def interpret_message(message):
     # cannot be out of range; at least (stop, stop, word, stop, stop)
     wordpair = words[index] + u' ' + words[index + 1]
 
+    print 'Adding counts'
     while True:
         try:
             next = words[index + 2]
@@ -116,6 +115,8 @@ def interpret_message(message):
         if not (paircounts.has_key(wordpair)):
             paircounts[wordpair] = 0
         paircounts[wordpair] = paircounts.get(wordpair) + 1
+
+        print 'after'
 
         # add 'next' as a word that comes after 'wordpair'
         if dictionary.has_key(wordpair):
@@ -129,6 +130,7 @@ def interpret_message(message):
         else:
             dictionary[wordpair] = ([], [(next, 1)])
 
+        print 'before'
 
         # add 'word' as a word that comes before 'nextpair'
         if dictionary.has_key(nextpair):
@@ -147,7 +149,6 @@ def interpret_message(message):
         word = words[index]
         wordpair = word + u' ' + words[index + 1]
 
-    
     dictLock.release()
 
 
@@ -160,11 +161,8 @@ def generate_chain(message):
     words.append(STOPWORD)
     words.insert(0, STOPWORD)
 
- 
-
     if len(words) < 2:
         return ''
-
 
     # try to guess which word is the most important
     subject = STOPWORD
