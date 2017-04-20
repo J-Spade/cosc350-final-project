@@ -50,11 +50,17 @@ class MarkovReqHandler(BaseHTTPServer.BaseHTTPRequestHandler):
         if (len(form) > 0):
             message = form['text'].value.lower()
         print 'Interpreting message...'
-        MarkovReqHandler.interpret_message(message)
-        print 'Generating response...'
-        response = MarkovReqHandler.generate_chain(message)
-        self.wfile.write(webpage_text.replace('<!-- Response text goes here -->', response))
-        MarkovReqHandler.save_dictionary()
+        try:
+            MarkovReqHandler.interpret_message(message)
+            print 'Generating response...'
+            response = MarkovReqHandler.generate_chain(message)
+            self.wfile.write(webpage_text.replace('<!-- Response text goes here -->', response))
+            MarkovReqHandler.save_dictionary()
+        except UnicodeDecodeError:
+            print 'Unicode Error!'
+            self.wfile.write(webpage_text.replace(
+                                '<!-- Response text goes here -->',
+                                '<font color="EE3333">ERROR: Text entered must be ASCII-encoded.</font>')
 
     @staticmethod
     def save_dictionary():
