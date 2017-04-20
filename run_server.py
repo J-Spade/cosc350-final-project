@@ -82,7 +82,7 @@ class MarkovReqHandler(BaseHTTPServer.BaseHTTPRequestHandler):
     def load_dictionary():
         """Load the dictionary file"""
         MarkovReqHandler.dictLock.acquire()
-        MarkovReqHandler.s3_bucket_key.set_contents_to_filename('Markov_Dict.pkl')
+        MarkovReqHandler.s3_bucket_key.get_contents_to_filename('Markov_Dict.pkl')
         input = open('Markov_Dict.pkl', 'r')
         MarkovReqHandler.dictionary = pickle.load(input)
         input.close()
