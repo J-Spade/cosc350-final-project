@@ -66,6 +66,7 @@ class MarkovReqHandler(BaseHTTPServer.BaseHTTPRequestHandler):
     @staticmethod
     def save_dictionary():
         """Save the dictionary to disk"""
+        print 'Saving dictionary...'
         MarkovReqHandler.dictLock.acquire()
         output = open('Markov_Dict.pkl', 'w')
         pickle.dump(MarkovReqHandler.dictionary, output)
