@@ -60,7 +60,7 @@ class MarkovReqHandler(BaseHTTPServer.BaseHTTPRequestHandler):
             print 'Unicode Error!'
             self.wfile.write(webpage_text.replace(
                                 '<!-- Response text goes here -->',
-                                '<font color="EE3333">ERROR: Text entered must be ASCII-encoded.</font>')
+                                '<font color="EE3333">ERROR: Text entered must be ASCII-encoded.</font>'))
 
     @staticmethod
     def save_dictionary():
