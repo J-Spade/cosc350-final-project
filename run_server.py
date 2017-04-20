@@ -51,12 +51,12 @@ class MarkovReqHandler(BaseHTTPServer.BaseHTTPRequestHandler):
 
         self._set_headers()
         message = ''
-        print 'Interpreting message...'
         try:
             message = form['text'].value.lower()
+            print ('>> %s' % message)
             MarkovReqHandler.interpret_message(message)
-            print 'Generating response...'
             response = MarkovReqHandler.generate_chain(message)
+            print ('<< %s' % response)
             MarkovReqHandler.save_dictionary()
             self.wfile.write(webpage_text.replace('<!-- Response text goes here -->', response))
         except KeyError:
@@ -72,7 +72,6 @@ class MarkovReqHandler(BaseHTTPServer.BaseHTTPRequestHandler):
     @staticmethod
     def save_dictionary():
         """Save the dictionary to disk"""
-        print 'Saving dictionary...'
         MarkovReqHandler.dictLock.acquire()
         output = open('Markov_Dict.pkl', 'w')
         pickle.dump(MarkovReqHandler.dictionary, output)
