@@ -42,7 +42,7 @@ def runserver(server_class=BaseHTTPServer.HTTPServer,
     httpd.serve_forever()
 
 try:
-    webpage = open('chatbox.html', r)
+    webpage = open('chatbox.html', 'r')
     webpage_text = webpage.read()
     webpage.close()
 except IOError:
