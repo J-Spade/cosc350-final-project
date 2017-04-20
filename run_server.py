@@ -9,6 +9,21 @@ import threading
 
 class MarkovReqHandler(BaseHTTPServer.BaseHTTPRequestHandler):
     
+    webpage_text = ''
+
+    STOPWORD = 'BOGON'
+
+    #       key        come-befores       come-afters
+    DEFAULT_DICTIONARY = {STOPWORD: ([(STOPWORD, 1)], [(STOPWORD, 1)])}
+    dictionary = copy.deepcopy(DEFAULT_DICTIONARY)
+
+    wordcounts = {STOPWORD: 0}
+    paircounts = {STOPWORD: 0}
+    sentences_ever = 0
+
+    dictLock = threading.Lock()
+
+
     def _set_headers(self):
         self.send_response(200)
         self.send_header('Content-type', 'text/html')
@@ -40,159 +55,175 @@ class MarkovReqHandler(BaseHTTPServer.BaseHTTPRequestHandler):
         self.wfile.write(webpage_text.replace('<!-- Response text goes here -->', response))
         save_dictionary()
 
+    def save_dictionary():
+        """Save the dictionary to disk"""
+        dictLock.acquire()
+        output = open('Markov_Dict.pkl', 'w')
+        pickle.dump(dictionary, output)
+        output.close()
+        dictLock.release()
 
+    def load_dictionary():
+        """Load the dictionary file"""
+        dictLock.acquire()
+        input = open('Markov_Dict.pkl', 'r')
+        dictionary = pickle.load(input)
+        input.close()
+        dictLock.release()
 
-def runserver(server_class=BaseHTTPServer.HTTPServer,
-        handler_class=MarkovReqHandler,
-        port=int(os.environ.get('PORT', 5000))):
-    server_address = ('0.0.0.0', port)
-    httpd = server_class(server_address, handler_class)
-    print 'Starting httpd...'
-    httpd.serve_forever()
+    def count_dictionary():
+        print 'Counting words...'            
+        for wordpair in dictionary:
 
+            temp = wordpair.split()
+            uses = 0
+            for temp in dictionary.get(wordpair)[0]:
+                uses = uses + temp[1]
+            paircounts[wordpair] = uses
 
-def save_dictionary():
-    """Save the dictionary to disk"""
-    dictLock.acquire()
-    output = open('Markov_Dict.pkl', 'w')
-    pickle.dump(dictionary, output)
-    output.close()
-    dictLock.release()
+            tally = 0
+            for prev in dictionary.get(wordpair)[0]:
+                tally += prev[1]
 
-def load_dictionary():
-    """Load the dictionary file"""
-    dictLock.acquire()
-    input = open('Markov_Dict.pkl', 'r')
-    dictionary = pickle.load(input)
-    input.close()
-    dictLock.release()
-
-def interpret_message(message):
-    """Interprets a message"""
+            first = wordpair.split()[0]
+            if not (wordcounts.has_key(first)):
+                wordcounts[first] = 0
+            wordcounts[first] = wordcounts.get(first) + tally
     
-    dictLock.acquire()
-    words = message.split()
-    words.append(STOPWORD)
-    words.insert(0, STOPWORD)
+            if wordpair != STOPWORD:
+                second = wordpair.split()[1]
+                if not (wordcounts.has_key(second)):
+                    wordcounts[second] = 0
+                wordcounts[second] = wordcounts.get(second) + tally
 
-    sentences_ever = sentences_ever + 1
+        sentences_ever = wordcounts.get(STOPWORD)
 
-    for word in words:
-        if not (wordcounts.has_key(word)):
-            wordcounts[word] = 0
-        wordcounts[word] = wordcounts.get(word) + 1
+    def interpret_message(message):
+        """Interprets a message"""
+    
+        dictLock.acquire()
+        words = message.split()
+        words.append(STOPWORD)
+        words.insert(0, STOPWORD)
 
-    index = 0
-    word = words[index]
-    # cannot be out of range; at least (stop, stop, word, stop, stop)
-    wordpair = words[index] + u' ' + words[index + 1]
+        sentences_ever = sentences_ever + 1
 
-    while True:
-        try:
-            next = words[index + 2]
-            nextpair = words[index + 1] + u' ' + words[index + 2]
-        except IndexError:
-            # this means we got to the end of the sentence
-            break
+        for word in words:
+            if not (wordcounts.has_key(word)):
+                wordcounts[word] = 0
+            wordcounts[word] = wordcounts.get(word) + 1
 
-        if not (paircounts.has_key(wordpair)):
-            paircounts[wordpair] = 0
-        paircounts[wordpair] = paircounts.get(wordpair) + 1
-
-        # add 'next' as a word that comes after 'wordpair'
-        if dictionary.has_key(wordpair):
-            temp = dictionary.get(wordpair)[1]
-            wordindex = word_index_in_list(next, temp)
-            if wordindex == -1:
-                temp.append((next, 1))
-            else:
-                prevcount = temp[wordindex][1]
-                temp[wordindex] = (next, prevcount + 1)
-        else:
-            dictionary[wordpair] = ([], [(next, 1)])
-
-        # add 'word' as a word that comes before 'nextpair'
-        if dictionary.has_key(nextpair):
-            othertemp = dictionary.get(nextpair)[0]
-            wordindex = word_index_in_list(word, othertemp)
-            if wordindex == -1:
-                othertemp.append((word, 1))
-            else:
-                prevcount = othertemp[wordindex][1]
-                othertemp[wordindex] = (word, prevcount + 1)
-
-        else:
-            dictionary[nextpair] = ([(word, 1)], [])
-
-        index = index + 1
+        index = 0
         word = words[index]
-        wordpair = word + u' ' + words[index + 1]
+        # cannot be out of range; at least (stop, stop, word, stop, stop)
+        wordpair = words[index] + u' ' + words[index + 1]
 
-    dictLock.release()
+        while True:
+            try:
+                next = words[index + 2]
+                nextpair = words[index + 1] + u' ' + words[index + 2]
+           except IndexError:
+                # this means we got to the end of the sentence
+                break
+
+            if not (paircounts.has_key(wordpair)):
+                paircounts[wordpair] = 0
+            paircounts[wordpair] = paircounts.get(wordpair) + 1
+
+            # add 'next' as a word that comes after 'wordpair'
+            if dictionary.has_key(wordpair):
+                temp = dictionary.get(wordpair)[1]
+                wordindex = word_index_in_list(next, temp)
+                if wordindex == -1:
+                    temp.append((next, 1))
+                else:
+                    prevcount = temp[wordindex][1]
+                    temp[wordindex] = (next, prevcount + 1)
+            else:
+                dictionary[wordpair] = ([], [(next, 1)])
+
+            # add 'word' as a word that comes before 'nextpair'
+            if dictionary.has_key(nextpair):
+                othertemp = dictionary.get(nextpair)[0]
+                wordindex = word_index_in_list(word, othertemp)
+                if wordindex == -1:
+                    othertemp.append((word, 1))
+                else:
+                    prevcount = othertemp[wordindex][1]
+                    othertemp[wordindex] = (word, prevcount + 1)
+
+            else:
+                dictionary[nextpair] = ([(word, 1)], [])
+
+            index = index + 1
+            word = words[index]
+            wordpair = word + u' ' + words[index + 1]
+
+        dictLock.release()
 
 
-def generate_chain(message):
-    """Generates a Markov chain from a message"""
+    def generate_chain(message):
+        """Generates a Markov chain from a message"""
  
-    dictLock.acquire()
+        dictLock.acquire()
 
-    words = message.split()
-    words.append(STOPWORD)
-    words.insert(0, STOPWORD)
+        words = message.split()
+        words.append(STOPWORD)
+        words.insert(0, STOPWORD)
 
-    if len(words) < 2:
-        return ''
+        if len(words) < 2:
+            return ''
 
-    # try to guess which word is the most important
-    subject = STOPWORD
-    confidence = 0
+        # try to guess which word is the most important
+        subject = STOPWORD
+        confidence = 0
 
-    for word in words:
-        if wordcounts.has_key(word):
-            tfidf = tf_idf(word, words, wordcounts, sentences_ever)
-            if tfidf > confidence:
-                confidence = tfidf
-                subject = word
+        for word in words:
+            if wordcounts.has_key(word):
+                tfidf = tf_idf(word, words, wordcounts, sentences_ever)
+                if tfidf > confidence:
+                    confidence = tfidf
+                    subject = word
 
-    # pick a word pair we've seen used with that word before as a seed
-    pairs = []
-    for wordpair in paircounts:
-        temp = wordpair.split()
-        if (temp[0] == subject) or ((len(temp) > 1) and (temp[1] == subject)):
-            pairs.append((wordpair, paircounts.get(wordpair)))
+        # pick a word pair we've seen used with that word before as a seed
+        pairs = []
+        for wordpair in paircounts:
+            temp = wordpair.split()
+            if (temp[0] == subject) or ((len(temp) > 1) and (temp[1] == subject)):
+                pairs.append((wordpair, paircounts.get(wordpair)))
 
-    seed = choose_word_from_list(pairs)
+        seed = choose_word_from_list(pairs)
 
-    chain = ''
+        chain = ''
  
-    # forwards
-    wordpair = seed
-    if dictionary.has_key(wordpair):
-        chain = wordpair
-    #print wordpair
-    while (wordpair.split()[1] != STOPWORD) and (dictionary.has_key(wordpair)):
-        wordpair = wordpair.split()[1] + u' ' + \
-                    choose_word_from_list(dictionary.get(wordpair)[1])
+        # forwards
+        wordpair = seed
+        if dictionary.has_key(wordpair):
+            chain = wordpair
         #print wordpair
-        chain = chain + u' ' + wordpair.split()[1]
-    # backwards
-    wordpair = seed
-    if dictionary.has_key(wordpair) and wordpair.split()[0] != STOPWORD:
-        wordpair = choose_word_from_list(
-            dictionary.get(wordpair)[0]) + \
-            u' ' + wordpair.split()[0]
-    # so we don't have the seed twice
+        while (wordpair.split()[1] != STOPWORD) and (dictionary.has_key(wordpair)):
+            wordpair = wordpair.split()[1] + u' ' + \
+                        choose_word_from_list(dictionary.get(wordpair)[1])
+            #print wordpair
+            chain = chain + u' ' + wordpair.split()[1]
+        # backwards
+        wordpair = seed
+        if dictionary.has_key(wordpair) and wordpair.split()[0] != STOPWORD:
+            wordpair = choose_word_from_list(
+                dictionary.get(wordpair)[0]) + \
+                u' ' + wordpair.split()[0]
+        # so we don't have the seed twice
 
-    while (wordpair.split()[0] != STOPWORD) and (dictionary.has_key(wordpair)):
-        #print wordpair
-        chain = wordpair.split()[0] + u' ' + chain
-        wordpair = choose_word_from_list(
-            dictionary.get(wordpair)[0]) + \
-            u' ' + wordpair.split()[0]
+        while (wordpair.split()[0] != STOPWORD) and (dictionary.has_key(wordpair)):
+            #print wordpair
+            chain = wordpair.split()[0] + u' ' + chain
+            wordpair = choose_word_from_list(
+                dictionary.get(wordpair)[0]) + \
+                u' ' + wordpair.split()[0]
 
-    dictLock.release()
+        dictLock.release()
 
-    return chain.replace(STOPWORD, u'')
+        return chain.replace(STOPWORD, u'')
 
 
 def word_index_in_list(findword, word_list):
@@ -237,19 +268,6 @@ def tf_idf(keyword, words, counts, totalcount):
 #             #
 ###############
 
-webpage_text = ''
-
-STOPWORD = 'BOGON'
-
-#       key        come-befores       come-afters
-DEFAULT_DICTIONARY = {STOPWORD: ([(STOPWORD, 1)], [(STOPWORD, 1)])}
-dictionary = copy.deepcopy(DEFAULT_DICTIONARY)
-
-wordcounts = {STOPWORD: 0}
-paircounts = {STOPWORD: 0}
-sentences_ever = 0
-
-dictLock = threading.Lock()
 
 print 'Loading chatbox.html...'
 try:
@@ -261,36 +279,19 @@ except IOError:
 
 print 'Loading dictionary...'
 try:
-    load_dictionary()
-
-    print 'Counting words...'            
-    for wordpair in dictionary:
-
-        temp = wordpair.split()
-        uses = 0
-        for temp in dictionary.get(wordpair)[0]:
-            uses = uses + temp[1]
-        paircounts[wordpair] = uses
-
-        tally = 0
-        for prev in dictionary.get(wordpair)[0]:
-            tally += prev[1]
-
-        first = wordpair.split()[0]
-        if not (wordcounts.has_key(first)):
-            wordcounts[first] = 0
-        wordcounts[first] = wordcounts.get(first) + tally
-
-        if wordpair != STOPWORD:
-            second = wordpair.split()[1]
-            if not (wordcounts.has_key(second)):
-                wordcounts[second] = 0
-            wordcounts[second] = wordcounts.get(second) + tally
-
-    sentences_ever = wordcounts.get(STOPWORD)
+    MarkovReqHandler.load_dictionary()
+    MarkovReqHandler.count_dictionary()
 
 except IOError:
     print 'Dictionary could not be loaded.'
     dictLock.release()
 
-runserver()
+
+server_class = BaseHTTPServer.HTTPServer
+handler_class = MarkovReqHandler
+port = int(os.environ.get('PORT', 5000)
+
+server_address = ('0.0.0.0', port)
+httpd = server_class(server_address, handler_class)
+print 'Starting httpd...'
+httpd.serve_forever()
