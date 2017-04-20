@@ -99,7 +99,7 @@ class MarkovReqHandler(BaseHTTPServer.BaseHTTPRequestHandler):
                     MarkovReqHandler.wordcounts[second] = 0
                 MarkovReqHandler.wordcounts[second] = MarkovReqHandler.wordcounts.get(second) + tally
 
-        sentences_ever = MarkovReqHandler.wordcounts.get(MarkovReqHandler.STOPWORD)
+        MarkovReqHandler.sentences_ever = MarkovReqHandler.wordcounts.get(MarkovReqHandler.STOPWORD)
 
     @staticmethod
     def interpret_message(message):
@@ -110,7 +110,7 @@ class MarkovReqHandler(BaseHTTPServer.BaseHTTPRequestHandler):
         words.append(MarkovReqHandler.STOPWORD)
         words.insert(0, MarkovReqHandler.STOPWORD)
 
-        sentences_ever = sentences_ever + 1
+        MarkovReqHandler.sentences_ever = MarkovReqHandler.sentences_ever + 1
 
         for word in words:
             if not (MarkovReqHandler.wordcounts.has_key(word)):
@@ -184,7 +184,7 @@ class MarkovReqHandler(BaseHTTPServer.BaseHTTPRequestHandler):
 
         for word in words:
             if MarkovReqHandler.wordcounts.has_key(word):
-                tfidf = tf_idf(word, words, MarkovReqHandler.wordcounts, sentences_ever)
+                tfidf = tf_idf(word, words, MarkovReqHandler.wordcounts, MarkovReqHandler.sentences_ever)
                 if tfidf > confidence:
                     confidence = tfidf
                     subject = word
