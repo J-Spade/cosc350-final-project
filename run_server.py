@@ -7,6 +7,8 @@ import string
 import copy
 import threading
 import pickle
+from boto.s3.connection import S3Connection
+from boto.s3.key import Key
 
 class MarkovReqHandler(BaseHTTPServer.BaseHTTPRequestHandler):
     
@@ -23,6 +25,8 @@ class MarkovReqHandler(BaseHTTPServer.BaseHTTPRequestHandler):
     sentences_ever = 0
 
     dictLock = threading.Lock()
+
+    MarkovReqHandler.s3_bucket_key = None
 
 
     def _set_headers(self):
@@ -71,12 +75,14 @@ class MarkovReqHandler(BaseHTTPServer.BaseHTTPRequestHandler):
         output = open('Markov_Dict.pkl', 'w')
         pickle.dump(MarkovReqHandler.dictionary, output)
         output.close()
+        MarkovReqHandler.s3_bucket_key.set_contents_from_filename('Markov_Dict.pkl')
         MarkovReqHandler.dictLock.release()
 
     @staticmethod
     def load_dictionary():
         """Load the dictionary file"""
         MarkovReqHandler.dictLock.acquire()
+        MarkovReqHandler.s3_bucket_key.set_contents_to_filename('Markov_Dict.pkl')
         input = open('Markov_Dict.pkl', 'r')
         MarkovReqHandler.dictionary = pickle.load(input)
         input.close()
@@ -289,6 +295,11 @@ try:
     webpage.close()
 except IOError:
     print 'Unable to load chatbox.html'
+
+print 'Creating S3 connection...'
+conn = S3Connection()
+bucket = conn.get_bucket(os.environ.get('S3_BUCKET_NAME'))
+MarkovReqHandler.s3_bucket_key = Key(bucket)
 
 print 'Loading dictionary...'
 try:
