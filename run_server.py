@@ -62,7 +62,7 @@ def runserver(server_class=BaseHTTPServer.HTTPServer,
     httpd.serve_forever()
 
 
-def save_dictionary(self):
+def save_dictionary():
     """Save the dictionary to disk"""
     dictLock.acquire()
     output = open('Markov_Dict.pkl', 'w')
@@ -70,7 +70,7 @@ def save_dictionary(self):
     output.close()
     dictLock.release()
 
-def load_dictionary(self):
+def load_dictionary():
     """Load the dictionary file"""
     dictLock.acquire()
     input = open('Markov_Dict.pkl', 'r')
@@ -78,7 +78,7 @@ def load_dictionary(self):
     input.close()
     dictLock.release()
 
-def interpret_message(self, message):
+def interpret_message(message):
     """Interprets a message"""
     
     dictLock.acquire()
@@ -148,7 +148,7 @@ def interpret_message(self, message):
     dictLock.release()
 
 
-def generate_chain(self, message):
+def generate_chain(message):
     """Generates a Markov chain from a message"""
  
     dictLock.acquire()
