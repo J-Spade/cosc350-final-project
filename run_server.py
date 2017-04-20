@@ -58,20 +58,20 @@ class MarkovReqHandler(BaseHTTPServer.BaseHTTPRequestHandler):
     @staticmethod
     def save_dictionary():
         """Save the dictionary to disk"""
-        dictLock.acquire()
+        MarkovReqHandler.dictLock.acquire()
         output = open('Markov_Dict.pkl', 'w')
         pickle.dump(dictionary, output)
         output.close()
-        dictLock.release()
+        MarkovReqHandler.dictLock.release()
 
     @staticmethod
     def load_dictionary():
         """Load the dictionary file"""
-        dictLock.acquire()
+        MarkovReqHandler.dictLock.acquire()
         input = open('Markov_Dict.pkl', 'r')
         dictionary = pickle.load(input)
         input.close()
-        dictLock.release()
+        MarkovReqHandler.dictLock.release()
 
     @staticmethod
     def count_dictionary():
@@ -105,7 +105,7 @@ class MarkovReqHandler(BaseHTTPServer.BaseHTTPRequestHandler):
     def interpret_message(message):
         """Interprets a message"""
     
-        dictLock.acquire()
+        MarkovReqHandler.dictLock.acquire()
         words = message.split()
         words.append(STOPWORD)
         words.insert(0, STOPWORD)
@@ -163,13 +163,13 @@ class MarkovReqHandler(BaseHTTPServer.BaseHTTPRequestHandler):
             word = words[index]
             wordpair = word + u' ' + words[index + 1]
 
-        dictLock.release()
+        MarkovReqHandler.dictLock.release()
 
     @staticmethod
     def generate_chain(message):
         """Generates a Markov chain from a message"""
  
-        dictLock.acquire()
+        MarkovReqHandler.dictLock.acquire()
 
         words = message.split()
         words.append(STOPWORD)
@@ -225,7 +225,7 @@ class MarkovReqHandler(BaseHTTPServer.BaseHTTPRequestHandler):
                 dictionary.get(wordpair)[0]) + \
                 u' ' + wordpair.split()[0]
 
-        dictLock.release()
+        MarkovReqHandler.dictLock.release()
 
         return chain.replace(STOPWORD, u'')
 
@@ -288,7 +288,7 @@ try:
 
 except IOError:
     print 'Dictionary could not be loaded.'
-    dictLock.release()
+    MarkovReqHandler.dictLock.release()
 
 
 server_class = BaseHTTPServer.HTTPServer
