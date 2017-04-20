@@ -62,7 +62,6 @@ class MarkovReqHandler(BaseHTTPServer.BaseHTTPRequestHandler):
         except KeyError:
             print 'Key Error!'
             self.wfile.write(webpage_text)
-            MarkovReqHandler.dictLock.release()
         except UnicodeDecodeError:
             print 'Unicode Error!'
             self.wfile.write(webpage_text.replace(
