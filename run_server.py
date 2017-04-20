@@ -25,7 +25,7 @@ class MarkovReqHandler(BaseHTTPServer.BaseHTTPRequestHandler):
 
     dictLock = threading.Lock()
 
-    MarkovReqHandler.s3_bucket_key = None
+    s3_bucket_key = None
 
 
     def _set_headers(self):
