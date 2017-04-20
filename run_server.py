@@ -55,6 +55,7 @@ class MarkovReqHandler(BaseHTTPServer.BaseHTTPRequestHandler):
         self.wfile.write(webpage_text.replace('<!-- Response text goes here -->', response))
         save_dictionary()
 
+    @staticmethod
     def save_dictionary():
         """Save the dictionary to disk"""
         dictLock.acquire()
@@ -63,6 +64,7 @@ class MarkovReqHandler(BaseHTTPServer.BaseHTTPRequestHandler):
         output.close()
         dictLock.release()
 
+    @staticmethod
     def load_dictionary():
         """Load the dictionary file"""
         dictLock.acquire()
@@ -71,6 +73,7 @@ class MarkovReqHandler(BaseHTTPServer.BaseHTTPRequestHandler):
         input.close()
         dictLock.release()
 
+    @staticmethod
     def count_dictionary():
         print 'Counting words...'            
         for wordpair in dictionary:
@@ -98,6 +101,7 @@ class MarkovReqHandler(BaseHTTPServer.BaseHTTPRequestHandler):
 
         sentences_ever = wordcounts.get(STOPWORD)
 
+    @staticmethod
     def interpret_message(message):
         """Interprets a message"""
     
@@ -161,7 +165,7 @@ class MarkovReqHandler(BaseHTTPServer.BaseHTTPRequestHandler):
 
         dictLock.release()
 
-
+    @staticmethod
     def generate_chain(message):
         """Generates a Markov chain from a message"""
  
