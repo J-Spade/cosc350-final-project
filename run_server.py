@@ -84,15 +84,13 @@ def load_dictionary():
 def interpret_message(message):
     """Interprets a message"""
     
-    print 'Acquiring Lock'
     dictLock.acquire()
     words = message.split()
     words.append(STOPWORD)
     words.insert(0, STOPWORD)
 
-    sentences_ever = sentences_ever + 1
+    self.sentences_ever = sentences_ever + 1
 
-    print 'Doing keys'
     for word in words:
         if not (wordcounts.has_key(word)):
             wordcounts[word] = 0
@@ -103,7 +101,6 @@ def interpret_message(message):
     # cannot be out of range; at least (stop, stop, word, stop, stop)
     wordpair = words[index] + u' ' + words[index + 1]
 
-    print 'Adding counts'
     while True:
         try:
             next = words[index + 2]
@@ -116,8 +113,6 @@ def interpret_message(message):
             paircounts[wordpair] = 0
         paircounts[wordpair] = paircounts.get(wordpair) + 1
 
-        print 'after'
-
         # add 'next' as a word that comes after 'wordpair'
         if dictionary.has_key(wordpair):
             temp = dictionary.get(wordpair)[1]
@@ -129,8 +124,6 @@ def interpret_message(message):
                 temp[wordindex] = (next, prevcount + 1)
         else:
             dictionary[wordpair] = ([], [(next, 1)])
-
-        print 'before'
 
         # add 'word' as a word that comes before 'nextpair'
         if dictionary.has_key(nextpair):
