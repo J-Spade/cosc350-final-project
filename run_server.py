@@ -5,6 +5,7 @@ import random
 import math
 import string
 import copy
+import threading
 
 webpage_text = ''
 
@@ -18,6 +19,7 @@ wordcounts = {STOPWORD: 0}
 paircounts = {STOPWORD: 0}
 sentences_ever = 0
 
+dictLock = threading.Lock()
 
 class MarkovReqHandler(BaseHTTPServer.BaseHTTPRequestHandler):
     
@@ -46,7 +48,7 @@ class MarkovReqHandler(BaseHTTPServer.BaseHTTPRequestHandler):
         if (len(form) > 0):
             message = form['text'].value.lower()
         self.interpret_message(message)
-        response = self.generate_chain(message)
+        response = generate_chain(message)
         self.wfile.write(webpage_text.replace('<!-- Response text goes here -->', response))
 
 
@@ -62,40 +64,38 @@ def runserver(server_class=BaseHTTPServer.HTTPServer,
 
 def save_dictionary(self):
     """Save the dictionary to disk"""
-    self.dictLock.acquire()
+    dictLock.acquire()
     output = open('Markov_Dict.pkl', 'w')
-    pickle.dump(self.dictionary, output)
+    pickle.dump(dictionary, output)
     output.close()
-    self.dictLock.release()
+    dictLock.release()
 
 def load_dictionary(self):
     """Load the dictionary file"""
-    self.dictLock.acquire()
+    dictLock.acquire()
     input = open('Markov_Dict.pkl', 'r')
-    self.dictionary = pickle.load(input)
+    dictionary = pickle.load(input)
     input.close()
-    self.dictLock.release()
+    dictLock.release()
 
 def interpret_message(self, message):
     """Interprets a message"""
     
-    self.dictLock.acquire()
+    dictLock.acquire()
     words = message.split()
-    words.append(self.STOPWORD)
-    words.insert(0, self.STOPWORD)
+    words.append(STOPWORD)
+    words.insert(0, STOPWORD)
 
-    self.sentences_ever = self.sentences_ever + 1
-    self.stats['sentences_ever'] = self.sentences_ever
-    self.update_stats_file()
+    sentences_ever = sentences_ever + 1
 
     # find URLs, neaten them up
     for i in range(0, len(words)):
         words[i] = clean_url(words[i])
 
     for word in words:
-        if not (self.wordcounts.has_key(word)):
-            self.wordcounts[word] = 0
-        self.wordcounts[word] = self.wordcounts.get(word) + 1
+        if not (wordcounts.has_key(word)):
+            wordcounts[word] = 0
+        wordcounts[word] = wordcounts.get(word) + 1
 
     index = 0
     word = words[index]
@@ -110,13 +110,13 @@ def interpret_message(self, message):
             # this means we got to the end of the sentence
             break
 
-        if not (self.paircounts.has_key(wordpair)):
-            self.paircounts[wordpair] = 0
-        self.paircounts[wordpair] = self.paircounts.get(wordpair) + 1
+        if not (paircounts.has_key(wordpair)):
+            paircounts[wordpair] = 0
+        paircounts[wordpair] = paircounts.get(wordpair) + 1
 
         # add 'next' as a word that comes after 'wordpair'
-        if self.dictionary.has_key(wordpair):
-            temp = self.dictionary.get(wordpair)[1]
+        if dictionary.has_key(wordpair):
+            temp = dictionary.get(wordpair)[1]
             wordindex = word_index_in_list(next, temp)
             if wordindex == -1:
                 temp.append((next, 1))
@@ -124,12 +124,12 @@ def interpret_message(self, message):
                 prevcount = temp[wordindex][1]
                 temp[wordindex] = (next, prevcount + 1)
         else:
-            self.dictionary[wordpair] = ([], [(next, 1)])
+            dictionary[wordpair] = ([], [(next, 1)])
 
 
         # add 'word' as a word that comes before 'nextpair'
-        if self.dictionary.has_key(nextpair):
-            othertemp = self.dictionary.get(nextpair)[0]
+        if dictionary.has_key(nextpair):
+            othertemp = dictionary.get(nextpair)[0]
             wordindex = word_index_in_list(word, othertemp)
             if wordindex == -1:
                 othertemp.append((word, 1))
@@ -138,52 +138,48 @@ def interpret_message(self, message):
                 othertemp[wordindex] = (word, prevcount + 1)
 
         else:
-            self.dictionary[nextpair] = ([(word, 1)], [])
+            dictionary[nextpair] = ([(word, 1)], [])
 
         index = index + 1
         word = words[index]
         wordpair = word + u' ' + words[index + 1]
 
     
-    self.dictLock.release()
+    dictLock.release()
 
 
 def generate_chain(self, message):
     """Generates a Markov chain from a message"""
  
-    self.dictLock.acquire()
+    dictLock.acquire()
 
     words = message.split()
-    words.append(self.STOPWORD)
-    words.insert(0, self.STOPWORD)
+    words.append(STOPWORD)
+    words.insert(0, STOPWORD)
 
-    # find URLs, neaten them up
-    for i in range(0, len(words)):
-        words[i] = clean_url(words[i])
-    if '<{}>'.format(self.users[self.BOT_ID]) in words[1]:
-        del words[1]
+ 
 
     if len(words) < 2:
         return ''
 
 
     # try to guess which word is the most important
-    subject = self.STOPWORD
+    subject = STOPWORD
     confidence = 0
 
     for word in words:
-        if self.wordcounts.has_key(word):
-            tfidf = tf_idf(word, words, self.wordcounts, self.sentences_ever)
+        if wordcounts.has_key(word):
+            tfidf = tf_idf(word, words, wordcounts, sentences_ever)
             if tfidf > confidence:
                 confidence = tfidf
                 subject = word
 
     # pick a word pair we've seen used with that word before as a seed
     pairs = []
-    for wordpair in self.paircounts:
+    for wordpair in paircounts:
         temp = wordpair.split()
         if (temp[0] == subject) or ((len(temp) > 1) and (temp[1] == subject)):
-            pairs.append((wordpair, self.paircounts.get(wordpair)))
+            pairs.append((wordpair, paircounts.get(wordpair)))
 
     seed = choose_word_from_list(pairs)
 
@@ -191,32 +187,32 @@ def generate_chain(self, message):
  
     # forwards
     wordpair = seed
-    if self.dictionary.has_key(wordpair):
+    if dictionary.has_key(wordpair):
         chain = wordpair
     #print wordpair
-    while (wordpair.split()[1] != self.STOPWORD) and (self.dictionary.has_key(wordpair)):
+    while (wordpair.split()[1] != STOPWORD) and (dictionary.has_key(wordpair)):
         wordpair = wordpair.split()[1] + u' ' + \
-                    choose_word_from_list(self.dictionary.get(wordpair)[1])
+                    choose_word_from_list(dictionary.get(wordpair)[1])
         #print wordpair
         chain = chain + u' ' + wordpair.split()[1]
     # backwards
     wordpair = seed
-    if self.dictionary.has_key(wordpair) and wordpair.split()[0] != self.STOPWORD:
+    if dictionary.has_key(wordpair) and wordpair.split()[0] != STOPWORD:
         wordpair = choose_word_from_list(
-            self.dictionary.get(wordpair)[0]) + \
+            dictionary.get(wordpair)[0]) + \
             u' ' + wordpair.split()[0]
     # so we don't have the seed twice
 
-    while (wordpair.split()[0] != self.STOPWORD) and (self.dictionary.has_key(wordpair)):
+    while (wordpair.split()[0] != STOPWORD) and (dictionary.has_key(wordpair)):
         #print wordpair
         chain = wordpair.split()[0] + u' ' + chain
         wordpair = choose_word_from_list(
-            self.dictionary.get(wordpair)[0]) + \
+            dictionary.get(wordpair)[0]) + \
             u' ' + wordpair.split()[0]
 
-    self.dictLock.release()
+    dictLock.release()
 
-    return chain.replace(self.STOPWORD, u'')
+    return chain.replace(STOPWORD, u'')
 
 
 def word_index_in_list(findword, word_list):
@@ -271,34 +267,33 @@ except IOError:
 
 print 'Loading dictionary...'
 try:
-    self.load_dictionary()
+    load_dictionary()
 
     print 'Counting words...'            
-    for wordpair in self.dictionary:
+    for wordpair in dictionary:
 
         temp = wordpair.split()
         uses = 0
-        for temp in self.dictionary.get(wordpair)[0]:
+        for temp in dictionary.get(wordpair)[0]:
             uses = uses + temp[1]
-        self.paircounts[wordpair] = uses
+        paircounts[wordpair] = uses
 
         tally = 0
-        for prev in self.dictionary.get(wordpair)[0]:
+        for prev in dictionary.get(wordpair)[0]:
             tally += prev[1]
 
         first = wordpair.split()[0]
-        if not (self.wordcounts.has_key(first)):
-            self.wordcounts[first] = 0
-        self.wordcounts[first] = self.wordcounts.get(first) + tally
+        if not (wordcounts.has_key(first)):
+            wordcounts[first] = 0
+        wordcounts[first] = wordcounts.get(first) + tally
 
-        if wordpair != self.STOPWORD:
+        if wordpair != STOPWORD:
             second = wordpair.split()[1]
-            if not (self.wordcounts.has_key(second)):
-                self.wordcounts[second] = 0
-            self.wordcounts[second] = self.wordcounts.get(second) + tally
+            if not (wordcounts.has_key(second)):
+                wordcounts[second] = 0
+            wordcounts[second] = wordcounts.get(second) + tally
 
-    self.sentences_ever = self.wordcounts.get(self.STOPWORD)
-    self.stats['sentences_ever'] = self.sentences_ever
+    sentences_ever = wordcounts.get(STOPWORD)
 
 except IOError:
     print 'Dictionary could not be loaded.'
