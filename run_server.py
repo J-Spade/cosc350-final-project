@@ -13,7 +13,7 @@ class MarkovReqHandler(BaseHTTPServer.BaseHTTPRequestHandler):
 
     def do_GET(self):
         self._set_headers()
-        self.wfile.write('<html><body><form action="/" method="POST"><input type="text" name="text"><input type="submit" value="send"></form></body></html>')
+        self.wfile.write(webpage_text)
 
     def do_HEAD(self):
         self._set_headers()
@@ -30,7 +30,7 @@ class MarkovReqHandler(BaseHTTPServer.BaseHTTPRequestHandler):
         message = ''
         if (len(form) > 0):
             message = form['text'].value
-        self.wfile.write(str.replace(webpage_text, message))
+        self.wfile.write(webpage_text.replace('<!-- Response text goes here -->', message))
 
 
 def runserver(server_class=BaseHTTPServer.HTTPServer,
