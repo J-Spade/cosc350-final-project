@@ -6,6 +6,7 @@ import math
 import string
 import copy
 import threading
+import pickle
 
 class MarkovReqHandler(BaseHTTPServer.BaseHTTPRequestHandler):
     
