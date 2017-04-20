@@ -7,20 +7,6 @@ import string
 import copy
 import threading
 
-webpage_text = ''
-
-STOPWORD = 'BOGON'
-
-#       key        come-befores       come-afters
-DEFAULT_DICTIONARY = {STOPWORD: ([(STOPWORD, 1)], [(STOPWORD, 1)])}
-dictionary = copy.deepcopy(DEFAULT_DICTIONARY)
-
-wordcounts = {STOPWORD: 0}
-paircounts = {STOPWORD: 0}
-sentences_ever = 0
-
-dictLock = threading.Lock()
-
 class MarkovReqHandler(BaseHTTPServer.BaseHTTPRequestHandler):
     
     def _set_headers(self):
@@ -89,7 +75,7 @@ def interpret_message(message):
     words.append(STOPWORD)
     words.insert(0, STOPWORD)
 
-    self.sentences_ever = sentences_ever + 1
+    sentences_ever = sentences_ever + 1
 
     for word in words:
         if not (wordcounts.has_key(word)):
@@ -250,6 +236,20 @@ def tf_idf(keyword, words, counts, totalcount):
 # RUN SCRIPT: #
 #             #
 ###############
+
+webpage_text = ''
+
+STOPWORD = 'BOGON'
+
+#       key        come-befores       come-afters
+DEFAULT_DICTIONARY = {STOPWORD: ([(STOPWORD, 1)], [(STOPWORD, 1)])}
+dictionary = copy.deepcopy(DEFAULT_DICTIONARY)
+
+wordcounts = {STOPWORD: 0}
+paircounts = {STOPWORD: 0}
+sentences_ever = 0
+
+dictLock = threading.Lock()
 
 print 'Loading chatbox.html...'
 try:
