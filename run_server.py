@@ -51,15 +51,18 @@ class MarkovReqHandler(BaseHTTPServer.BaseHTTPRequestHandler):
 
         self._set_headers()
         message = ''
-        if (len(form) > 0):
-            message = form['text'].value.lower()
         print 'Interpreting message...'
         try:
+            message = form['text'].value.lower()
             MarkovReqHandler.interpret_message(message)
             print 'Generating response...'
             response = MarkovReqHandler.generate_chain(message)
             MarkovReqHandler.save_dictionary()
             self.wfile.write(webpage_text.replace('<!-- Response text goes here -->', response))
+        except KeyError:
+            print 'Key Error!'
+            self.wfile.write(webpage_text)
+            MarkovReqHandler.dictLock.release()
         except UnicodeDecodeError:
             print 'Unicode Error!'
             self.wfile.write(webpage_text.replace(
