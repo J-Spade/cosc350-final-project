@@ -7,6 +7,10 @@ import string
 import copy
 import threading
 import pickle
+import sys  
+
+reload(sys)  
+sys.setdefaultencoding('utf8')
 
 class MarkovReqHandler(BaseHTTPServer.BaseHTTPRequestHandler):
     
