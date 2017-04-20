@@ -310,7 +310,7 @@ try:
 except IOError:
     print 'Dictionary could not be loaded from file.'
     MarkovReqHandler.dictLock.release()
-except boto.exception.S3ResponseError
+except boto.exception.S3ResponseError:
     print 'Dictionary could not be loaded from S3.'
     MarkovReqHandler.dictLock.release()
 
