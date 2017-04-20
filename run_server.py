@@ -1,7 +1,6 @@
 import BaseHTTPServer
 import cgi
 import os
-import str
 
 webpage_text = ''
 
