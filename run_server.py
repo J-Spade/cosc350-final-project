@@ -7,7 +7,7 @@ import string
 import copy
 import threading
 import pickle
-import boto3
+import boto
 
 class MarkovReqHandler(BaseHTTPServer.BaseHTTPRequestHandler):
     
@@ -296,7 +296,7 @@ except IOError:
     print 'Unable to load chatbox.html'
 
 print 'Creating S3 connection...'
-conn = boto3.connect_s3()
+conn = boto.connect_s3()
 bucket = conn.get_bucket(os.environ.get('S3_BUCKET_NAME'))
 MarkovReqHandler.s3_bucket_key = Key(bucket)
 
