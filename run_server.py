@@ -53,7 +53,7 @@ class MarkovReqHandler(BaseHTTPServer.BaseHTTPRequestHandler):
         print 'Generating response...'
         response = MarkovReqHandler.generate_chain(message)
         self.wfile.write(webpage_text.replace('<!-- Response text goes here -->', response))
-        save_dictionary()
+        MarkovReqHandler.save_dictionary()
 
     @staticmethod
     def save_dictionary():
