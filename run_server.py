@@ -68,11 +68,11 @@ class MarkovReqHandler(BaseHTTPServer.BaseHTTPRequestHandler):
                                 '<!-- Response text goes here -->',
                                 '<font color="EE3333">ERROR: Text entered must be ASCII-encoded.</font>'))
             MarkovReqHandler.dictLock.release()
-        except Exception:
-            print 'Some other Error!'
-            self.wfile.write(webpage_text.replace(
-                                '<!-- Response text goes here -->',
-                                '<font color="EE3333">ERROR: No idea what happened. Tell Johh please!</font>'))
+     #   except Exception:
+     #       print 'Some other Error!'
+     #       self.wfile.write(webpage_text.replace(
+     #                           '<!-- Response text goes here -->',
+     #                           '<font color="EE3333">ERROR: No idea what happened. Tell Josh please!</font>'))
 
     @staticmethod
     def save_dictionary():
