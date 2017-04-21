@@ -265,7 +265,7 @@ def choose_word_from_list(word_list):
     for pair in word_list:
         total = total + pair[1]
         stops.append(total)
-    if sum > 1:
+    if total > 1:
         rand = random.randint(1, total)
     else:
         rand = 1
