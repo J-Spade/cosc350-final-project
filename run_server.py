@@ -71,6 +71,7 @@ class MarkovReqHandler(BaseHTTPServer.BaseHTTPRequestHandler):
         except IndexError:
             print 'Index Error!'
             self.wfile.write(webpage_text)
+            MarkovReqHandler.dictLock.release()
      #   except Exception:
      #       print 'Some other Error!'
      #       self.wfile.write(webpage_text.replace(
